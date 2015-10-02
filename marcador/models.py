@@ -14,7 +14,12 @@ class Tag(models.Model):
         ordering = ['name']
         
     def __str__(self):
-        return seld.name
+        return self.name
+
+class PublicBookmarkManager(models.Manager):
+    def get_queryset(self):
+        qs = super(PublicBookmarkManager, self).get_querryset()
+        return qs.filter(is_public=True)
 
 @python_2_unicode_compatible    
 class Bookmark(models.Model):
@@ -24,10 +29,12 @@ class Bookmark(models.Model):
     is_public = models.BooleanField('public', default = True)
     date_created = models.DateTimeField('date created')
     date_updated = models.DateTimeField('date updated')
-    owner = models.ForeignKey(User, verbose_name='owner',
-                             related_name'bookmarks')
+    owner = models.ForeignKey(User, verbose_name='owner', related_name ='bookmarks')
     tags = models.ManyToManyField(Tag, blank=True)
     
+    objects = models.Manager()
+    public = PublicBookmarkManager()
+
     class Meta:
         verbose_name = 'bookmark'
         verbose_name_plural = 'bookmarks'
@@ -35,3 +42,9 @@ class Bookmark(models.Model):
         
     def __str__(self):
         return '%s (%s)' %(self.title, self.url)
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.date_created = now()
+        self.date_updated = now()
+        super(Bookmark, self).save(*args, **kwargs)
